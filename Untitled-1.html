@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Simple Map</title>
+      
+    <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+      
+    <style>
+      html, body, #map  {
+        height: 100%;
+        width:100%;
+	    margin: 0;
+        padding: 0;
+      }
+    </style>
+      
+    <script src="https://js.arcgis.com/3.23/"></script>  
+    <script>
+     
+        
+        function displayResult(){
+            var map; 
+			
+			var x1=parseFloat(document.getElementById("text_log").value.toString());
+			var y1=parseFloat(document.getElementById("text_lat").value.toString());
+			
+			var x2=document.getElementById("text_zoo").value;
+			
+			var map1=document.getElementById("text_oce").value.toString();    
+								
+			
+        require(["esri/map", "dojo/domReady!"], function(Map) {
+        map = new Map("map", {
+          basemap: map1 ,  //For full list of pre-defined basemaps, navigate to http://arcg.is/1JVo6Wd
+          center:[x1, y1],
+            // [-122.45, 37.75], //longitude, latitude
+          zoom: x2
+        });
+      });
+                     
+        }        
+            
+    </script>     
+  </head>
+  <body> 
+	
+         <form>
+          Basemap: <input type="text" id ="text_oce" name="oceans"><br>
+		  longitude: <input type="text" id ="text_log" name="fname"><br>
+		  latitude: <input type="text" id = "text_lat" name="lname"><br>
+		  zoom：<input type="text" id = "text_zoo" name="lname"><br>
+         <input type="button" onclick="displayResult()" id="button1" value="显示地图">
+        <button class="btn btn-small icon-refresh js-btn-update-sandbox">
+            refresh
+        </button>
+             
+		</form> 
+	   <div id="map"></div>     
+  </body>
+</html>
+
