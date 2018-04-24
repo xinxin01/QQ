@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Simple Map</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.13/esri/css/esri.css">
+    <style>
+     html, body, #map{
+       padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      }
+        
+    </style>
+    <script src="https://js.arcgis.com/3.13/"></script>
+	<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script>
+      var map;
+      require(["esri/map",  
+            "esri/layers/ArcGISTiledMapServiceLayer",  
+            "esri/layers/GraphicsLayer",  
+            "esri/symbols/SimpleMarkerSymbol",  
+            "esri/symbols/SimpleLineSymbol",  
+			"esri/symbols/SimpleFillSymbol", 
+            "esri/renderers/SimpleRenderer",  
+            "esri/Color", "esri/geometry/Point",  
+            "esri/graphic",  
+            "dojo/domReady!"  ], function(Map,  
+            Tiled,  
+            GraphicsLayer,  
+            SimpleMarkerSymbol,  
+            SimpleLineSymbol, 
+            SimpleFillSymbol, 			
+            SimpleRenderer,  
+            Color, Point, Graphic) {
+        map = new Map("map", {
+            basemap: "dark-gray",
+            center: [119, 30],
+            zoom: 4
+    });
+		  //定义图层
+            var dLayer = new GraphicsLayer();  
+			var fLayer = new GraphicsLayer();  
+		  
+           //将定义的图层加载到地图中
+			map.addLayer(dLayer); 
+            map.addLayer(fLayer);			
+			
+            dLayer.on("click",function(feature){  
+                console.log(feature);  
+            });  
+		  
+		  //获取人口数据
+            map.on("load",function(){  
+                $.get("https://xinxin01.github.io/QQ/pop2_JSON.json",null,function(result){  
+                    var features = result.features; 
+					
+					//将人口数据加载到定义的图层中
+                    for(var i=0;i<features.length;i++){  
+                        var feature = features[i]; 
+						var dgraphic  = new Graphic(feature);  
+						var fgraphic  = new Graphic(feature); 
+                        dLayer.add(dgraphic);  
+						fLayer.add(fgraphic);
+                      
+                    }
+	   /**************************************************
+       * Define the renderer for symbolizing population
+       **************************************************/
+					
+		  //渲染省级底图，并设置其样式
+		  D = new SimpleRenderer(new SimpleFillSymbol().setOutline(new SimpleLineSymbol().setWidth(0.2).setColor(new Color([255,255,255]))));         
+           
+			//设置标记（人口数量）的样式
+         F = new SimpleRenderer(new SimpleMarkerSymbol(SimpleMarkerSymbol.STYLE_DIAMOND, 14, null, new Color([255, 0, 0, 0.6])));
+				
+		  //设置标记符号尺寸
+          F.setSizeInfo({
+             field:"POP",
+             minSize:2,
+             maxSize:30,
+             minDataValue:0,
+             maxDataValue:12000
+             });
+			fLayer.renderer=F;
+			dLayer.renderer= D;
+                });  
+				
+            });	
+			
+        });  
+    </script>
+  </head>
+
+  <body>
+    <div id="map"><div>
+  
+  </body>
+</html>
+ 

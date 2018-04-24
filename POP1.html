@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>geoJson人口分级渲染</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #infoDiv {
+      position: absolute;
+      bottom: 15px;
+      right: 0;
+      max-height: 80%;
+      max-width: 300px;
+      background-color: black;
+      padding: 8px;
+      border-top-left-radius: 5px;
+      color: white;
+      opacity: 0.8;
+    }
+  </style>
+	<link rel="stylesheet" href="http://202.114.148.160:6080/arcgis_js_api4.6/library/4.6/esri/css/main.css">	
+		<script src="http://202.114.148.160:6080/arcgis_js_api4.6/library/4.6/dojo/dojo.js"></script>
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/geometry/Point",
+      "esri/geometry/Polygon",
+      "esri/widgets/Legend",
+      "esri/request",
+      "dojo/domReady!"
+    ], function(MapView, Map, FeatureLayer, Point,Polygon, Legend, esriRequest) {
+
+      var lyr, legend;
+
+      /**************************************************
+       * Define the specification for each field to create
+       * in the layer
+	   *规范定义要在图层中创建的每个字段
+       **************************************************/
+		var fields = [
+			 {
+       		 name: "FID",
+	        alias: "FID",
+	        type: "oid"
+	      }, {
+	        name: "NAME_0",
+	        alias: "NAME_0",
+	        type: "string"
+	      }, {
+	        name: "NAME_1",
+	        alias: "NAME_1",
+	        type: "string"
+	      },{
+	        name: "POP",
+	        alias: "POP",
+	        type: "double"
+	      
+			}]
+
+      /**************************************************
+       * Create the map and view
+       **************************************************/
+
+      var map = new Map({
+        basemap: "dark-gray"
+      });
+
+      // Create MapView
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [114.30, 30.30],
+        zoom: 4,
+      });
+
+      /**************************************************
+       * Define the renderer for symbolizing population
+       **************************************************/
+
+		var class1 = {
+        type: "simple-fill", 
+        color: "#e3fae3",
+        style: "solid",
+        outline: {
+          width: 0.5,
+          color: "blue"
+        }
+      };
+
+      var class2 = {
+        type: "simple-fill", 
+        color: "#c6fac6",
+        style: "solid",
+        outline: {
+          width: 0.5,
+          color: "blue"
+        }
+      };
+
+      var class3 = {
+        type: "simple-fill", 
+        color: "#88fc88",
+        style: "solid",
+        outline: {
+          width: 0.5,
+          color: "blue"
+        }
+      };
+
+      var class4 = {
+        type: "simple-fill", 
+        color: "#4afc4a",
+        style: "solid",
+        outline: {
+          width: 0.5,
+          color: "blue"
+        }
+      };
+      var class5 = {
+        type: "simple-fill", 
+        color: "#02ff02",
+        style: "solid",
+        outline: {
+          width: 0.5,
+          color: "blue"
+        }
+      };
+
+      /*****************************************************************
+       * Set each unique value directly in the renderer's constructor.
+       * At least one field must be used (in this case the "POP" field).
+       * The label property of each unique value will be used to indicate
+       * the field value and symbol in the legend.
+       *****************************************************************/
+
+      var renderer = {
+        type: "class-breaks", 
+        field: "POP",
+        defaultSymbol: {
+          type: "simple-fill",
+          color: "blue",
+          outline: {
+            width: 0.5,
+            color: "white"
+          }
+        },
+        defaultLabel: "no data",
+        classBreakInfos: [{
+          minValue:300,
+          maxValue:1000,
+          symbol: class1,
+          label: "< 20%"
+        }, {
+          minValue: 1000,
+          maxValue: 2400,
+          symbol: class2,
+          label: "20 - 40%"
+        }, {
+          minValue:2400,
+          maxValue: 5500,
+          symbol: class3,
+          label: "40 - 60%"
+        }, {
+          minValue: 5500,
+          maxValue:8300,
+          symbol: class4,
+          label: "60 - 80%"
+        }, {
+          minValue: 8300,
+          maxValue: 12000,
+          symbol: class5,
+          label: "80-100%"
+        }]
+      };
+		
+      view.when(function() {
+          getData()
+          .then(createGraphics) // then send it to the createGraphics() method
+          .then(createLayer) // when graphics are created, create the layer
+          .otherwise(errback);
+      });
+
+      // Request the populaton data
+      function getData() {
+
+        var url = "POP2.geojson";
+        return esriRequest(url, {
+          responseType: "json"
+        });
+      }
+
+	 function createGraphics(response) {
+        // raw GeoJSON data
+        var geoJson = response.data;
+
+        // Create an array of Graphics from each GeoJSON feature
+		 //从每个GeoJSON要素创建一个图形数组
+        return geoJson.features.map(function(feature, i) {
+          return {
+            geometry: new Polygon({
+              rings:feature.geometry.coordinates[0]
+            }),
+            // select only the attributes you care about
+            attributes: {
+              FID: i,
+              NAME_0: feature.properties.NAME_0,
+              NAME_1: feature.properties.NAME_1,
+              POP: feature.properties.POP,
+            }
+          };
+        });
+      }
+		
+      function createLayer(response) {
+
+        lyr = new FeatureLayer({
+          source: response, // autocast as an array of esri/Graphic
+          // create an instance of esri/layers/support/Field for each field object
+          fields: fields, // This is required when creating a layer from Graphics
+          objectIdField: "FID", // This must be defined when creating a layer from Graphics
+          renderer: renderer, // set the visualization on the layer
+          spatialReference: {
+            wkid: 4326
+          },
+          outFields:["*"],
+          geometryType: "Polygon", // Must be set when creating a layer from Graphics
+        });
+        map.add(lyr);
+        return lyr;
+      }
+      // Executes if data retrieval was unsuccessful.
+      function errback(error) {
+        console.error("Creating legend failed. ", error);
+      }
+    });
+    function Symbol_Magnitude(){
+          window.open("POP2.html");
+      }
+
+  </script>
+</head>
+
+<body>
+	
+  <div id="viewDiv">
+	<button type="button" onclick="Symbol_Magnitude()">Symbol_Magnitude</button></div>  
+</body>
+</html>
