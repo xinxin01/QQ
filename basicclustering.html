@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Basic clustering on CSVLayer</title>
+
+<link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+<script src="https://js.arcgis.com/3.23/"></script>
+
+<style>
+  html, body, #viewDiv {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  #infoDiv{
+    top: 0px;
+    right: 0px;
+    position: absolute;
+    z-index: 2;
+    opacity:0.7;
+    background-color: whitesmoke;
+    padding: 8px;
+    font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+    font-size: 12px;
+  }
+</style>
+
+<script>
+  require([
+    "esri/map",
+    "esri/layers/CSVLayer",
+    "esri/dijit/PopupTemplate",
+    "esri/dijit/Legend",
+    "dojo/domReady!"
+  ], function(Map, CSVLayer, PopupTemplate, Legend
+  ) {
+
+    var map = new Map("viewDiv", {
+      basemap: "dark-gray",
+      center: [ -73.92872, 40.71321 ],
+      zoom: 11
+    });
+
+    // Enable clustering in the layer's constructor
+    // and add the layer to the map
+
+	    // Use CORS
+        esriConfig.defaults.io.corsEnabledServers.push("xinxin01.github.io"); // supports CORS
+	  
+	  
+    var serviceUrl = "https://xinxin01.github.io/QQ/index.csv";
+    var layer = new CSVLayer(serviceUrl, {
+		copyright: "GITHUB.io",
+      outFields: [ "depth", "place","type","gap" ],
+		featureReduction:{
+        type: "cluster"
+      },
+      infoTemplate: new PopupTemplate({
+        title: "{type}",
+        description: " {type}{place}."
+      })
+    });
+    map.addLayer(layer);
+
+    map.on("load", function(evt){
+      var legend = new Legend({
+        map: map,
+        layerInfos: [{
+          layer: layer,
+          title: "Earthquake distribution"
+        }]
+      }, "legendDiv");
+      legend.startup();
+    });
+
+  });
+
+</script>
+
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="infoDiv">
+    <div id="legendDiv"></div>
+  </div>
+</body>
+
+</html>
